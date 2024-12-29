@@ -24,7 +24,7 @@ This project implements a Snowflake ID generator in Python. The Snowflake algori
     ```
 2. Navigate to the project directory:
     ```sh
-    cd <project-directory>
+    cd simple-url-shortener
     ```
 3. Create a virtual environment:
     ```sh
