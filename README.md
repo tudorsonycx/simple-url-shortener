@@ -45,12 +45,39 @@ This project implements a Snowflake ID generator in Python. The Snowflake algori
     ```
 
 ## Usage
-For now, it only supports Unique ID generation
-1. Run the  script:
-    ```sh
-    python src/uid_gen.py
-    ```
-2. The script will continuously generate and print unique IDs.
+
+To generate unique IDs using the Snowflake algorithm, use the following command:
+
+```sh
+python src/uid_gen.py [-h] [-g COUNT] [-s [FILENAME]] [-c FILENAME] [-p]
+```
+
+### Options
+
+- `-g, --generate COUNT`: Generate `COUNT` unique IDs (default: 1).
+- `-s, --save [FILENAME]`: Save the generated IDs to a JSON file and store in the `uids` directory (default: `uids.json`).
+- `-c, --config FILENAME`: Path to the configuration file. Should be in a directory `config` (default: `config.json`).
+- `-p, --print`: Whether to also print the IDs when saving.
+
+### Examples
+
+Generate 5 unique IDs and print them:
+
+```sh
+python src/uid_gen.py -g 5 -p
+```
+
+Generate 10 unique IDs, save them to `my_ids.json`, and print them:
+
+```sh
+python src/uid_gen.py -g 10 -s my_ids.json -p
+```
+
+Generate 3 unique IDs using a custom configuration file:
+
+```sh
+python src/uid_gen.py -g 3 -c my_config.json
+```
 
 ## License
 This project is licensed under the MIT [License](LICENSE)
