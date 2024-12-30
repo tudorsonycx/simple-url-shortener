@@ -32,9 +32,9 @@ class Snowflake:
     machine_id_bits = 5
     sequence_bits = 12
 
-    max_datacenter_id = 2 << datacenter_id_bits - 1
-    max_machine_id = 2 << machine_id_bits - 1
-    max_sequence = 2 << sequence_bits - 1
+    max_datacenter_id = (1 << datacenter_id_bits) - 1
+    max_machine_id = (1 << machine_id_bits) - 1
+    max_sequence = (1 << sequence_bits) - 1
 
     timestamp_shift = datacenter_id_bits + machine_id_bits + sequence_bits
     datacenter_id_shift = machine_id_bits + sequence_bits
