@@ -1,5 +1,8 @@
 import time
 import argparse
+import json
+import os
+import sys
 
 
 class Snowflake:
@@ -38,14 +41,64 @@ class Snowflake:
     machine_id_shift = sequence_bits
 
     def __init__(self, datacenter_id: int, machine_id: int) -> None:
+        """
+        Initialize the UID generator with the specified datacenter and machine IDs.
+
+        Args:
+            datacenter_id (int): The ID of the datacenter.
+            machine_id (int): The ID of the machine.
+
+        Raises:
+            ValueError: If the datacenter_id is not between 0 and max_datacenter_id.
+            ValueError: If the machine_id is not between 0 and max_machine_id.
+        """
         if datacenter_id < 0 or datacenter_id > self.max_datacenter_id:
             raise ValueError(
                 f"Datcenter ID must be between 0 and {self.max_datacenter_id}"
             )
+        self.datacenter_id = datacenter_id
         if machine_id < 0 or machine_id > self.max_machine_id:
             raise ValueError(f"Machine ID must be between 0 and {self.max_machine_id}")
-        self.datacenter_id = datacenter_id
         self.machine_id = machine_id
+
+    @classmethod
+    def load_config(cls, config_file):
+        """
+        Load and validate the configuration from a JSON file.
+
+        Args:
+            config_file (str): The name of the configuration file to load.
+
+        Returns:
+            dict: The loaded configuration dictionary containing 'datacenter_id' and 'machine_id'.
+
+        Raises:
+            FileNotFoundError: If the configuration file does not exist.
+            ValueError: If the configuration file is not a valid JSON or does not contain the required keys.
+        """
+        config_path = os.path.join(
+            os.path.dirname(__file__), "..", "config", config_file
+        )
+        if not os.path.exists(config_path):
+            raise FileNotFoundError(
+                f"Configuration file '{config_file}' does not exist"
+            )
+
+        try:
+            with open(config_path) as f:
+                config = json.load(f)
+        except json.JSONDecodeError:
+            raise ValueError(
+                f"Configuration file '{config_file}' is not a valid JSON file"
+            )
+
+        valid_keys = {"datacenter_id", "machine_id"}
+        if not valid_keys.issubset(config.keys()):
+            raise ValueError(
+                f"Config file '{config_file}' doesn't contain 'machine_id' and 'datacenter_id' keys"
+            )
+
+        return config
 
     def current_time(self) -> int:
         """
@@ -60,14 +113,14 @@ class Snowflake:
         """
         Waits until the next millisecond.
 
-        This method loops until the current timestamp is greater than the provided last_timestamp.
-        It ensures that the next timestamp is always in the future compared to the last_timestamp.
+        This method continuously checks the current time until it is greater than the provided last timestamp.
+        It ensures that the returned timestamp is always in the future relative to the last timestamp.
 
         Args:
-            last_timestamp (int): The last recorded timestamp.
+            last_timestamp (int): The last recorded timestamp in milliseconds.
 
         Returns:
-            int: The new timestamp that is greater than the last_timestamp.
+            int: The new timestamp in milliseconds, which is guaranteed to be greater than the last timestamp.
         """
         timestamp = self.current_time()
         while timestamp <= last_timestamp:
@@ -119,10 +172,63 @@ if __name__ == "__main__":
         metavar="COUNT",
         help="generate COUNT unique IDs",
     )
+    parser.add_argument(
+        "-s",
+        "--save",
+        nargs="?",
+        const="uids.json",
+        metavar="FILENAME",
+        help="save the generated IDs to a JSON file and store in the "
+        "'uids' directory (default: uids.json)",
+    )
+    parser.add_argument(
+        "-c",
+        "--config",
+        default="config.json",
+        metavar="FILENAME",
+        help="path to the configuration file. should be in a directory 'config'",
+    )
+    parser.add_argument(
+        "-p",
+        "--print",
+        action="store_true",
+        help="whether to also print the IDs when saving",
+    )
     args = parser.parse_args()
 
-    uid_gen = Snowflake(1, 1)
+    try:
+        config = Snowflake.load_config(args.config)
+    except (FileNotFoundError, ValueError) as e:
+        print(e)
+        sys.exit(1)
+    datacenter_id = config["datacenter_id"]
+    machine_id = config["machine_id"]
+
+    try:
+        uid_gen = Snowflake(datacenter_id, machine_id)
+    except ValueError as e:
+        print(e)
+        sys.exit(1)
+
+    uids = []
 
     for _ in range(args.generate):
         unique_id = uid_gen.generate_id()
-        print(f"Generated ID: {unique_id}")
+        uids.append(unique_id)
+        if not args.save or args.print:
+            print(f"Generated ID: {unique_id}")
+
+    if args.save:
+        uids_dir = os.path.join(os.path.dirname(__file__), "..", "uids")
+        if not os.path.exists(uids_dir):
+            os.makedirs(uids_dir)
+
+        uid_path_base = os.path.basename(args.save)
+        extension_idx = len(uid_path_base)
+        if "." in uid_path_base:
+            extension_idx = uid_path_base.find(".")
+        uid_path_base_root = uid_path_base[:extension_idx]
+        uids_output_path = os.path.join(uids_dir, f"{uid_path_base_root}.json")
+        with open(uids_output_path, "w") as f:
+            json.dump(uids, f, indent="\t")
+            print(f"Saved {len(uids)} IDs to {uids_output_path}")
