@@ -213,7 +213,12 @@ if __name__ == "__main__":
     uids = []
 
     for _ in range(args.generate):
-        unique_id = uid_gen.generate_id()
+        try:
+            unique_id = uid_gen.generate_id()
+        except Exception as e:
+            print(e)
+            sys.exit(1)
+
         uids.append(unique_id)
         if not args.save or args.print:
             print(f"Generated ID: {unique_id}")
@@ -228,7 +233,9 @@ if __name__ == "__main__":
         if "." in uid_path_base:
             extension_idx = uid_path_base.find(".")
         uid_path_base_root = uid_path_base[:extension_idx]
+
         uids_output_path = os.path.join(uids_dir, f"{uid_path_base_root}.json")
+
         with open(uids_output_path, "w") as f:
             json.dump(uids, f, indent="\t")
             print(f"Saved {len(uids)} IDs to {uids_output_path}")
