@@ -12,7 +12,7 @@ This project implements a Snowflake ID generator in Python. The Snowflake algori
 
 ## TODO
 - [ ] Implement URL Shortener
-- [ ] Create a command-line interface (CLI) for easier usage
+- [x] Create a command-line interface (CLI) for easier usage
 
 ## Technologies Used
 - Python 3.x
