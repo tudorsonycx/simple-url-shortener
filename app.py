@@ -39,3 +39,24 @@ def shorten_url(item: URLItem):
     short_to_long_url_map[encoded_uid] = long_url
 
     return {"short_url": encoded_uid}
+
+
+@app.get("/{short_url}")
+def redirect_url(short_url: str) -> RedirectResponse:
+    """
+    Redirects to the long URL corresponding to the given short URL.
+
+    Args:
+        short_url (str): The short URL to be redirected.
+
+    Returns:
+        RedirectResponse: A response object that redirects to the long URL.
+
+    Raises:
+        HTTPException: If the short URL does not exist in the mapping.
+    """
+    long_url = short_to_long_url_map.get(short_url)
+    if long_url:
+        return RedirectResponse(url=long_url)
+    else:
+        raise HTTPException(status_code=404, detail="URL not found")
