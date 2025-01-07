@@ -2,3 +2,4 @@ venv
 uids
 config
 __pycache__
+.db
